@@ -14,6 +14,7 @@ from bpy.types import Operator
 
 from . import api_client
 from . import prompts
+from . import script_validation
 
 
 class AI_OT_Generate(Operator):
@@ -107,6 +108,14 @@ class AI_OT_ExecuteScript(Operator):
         scene = context.scene
         script = scene.ai_current_script
 
+        # Validate script before execution
+        validation_result = script_validation.validate_script_safety(script)
+        if not validation_result.is_valid:
+            error_msg = script_validation.get_user_friendly_error_message(validation_result)
+            scene.ai_status = f"Validation error: {error_msg}"
+            self.report({'ERROR'}, error_msg)
+            return {'CANCELLED'}
+
         # Push undo state
         bpy.ops.ed.undo_push(message="Execute AI Generated Script")
 
@@ -160,6 +169,14 @@ class AI_OT_ReplayGeneration(Operator):
 
         history_item = scene.ai_history[self.index]
         script = history_item.script
+
+        # Validate script before execution
+        validation_result = script_validation.validate_script_safety(script)
+        if not validation_result.is_valid:
+            error_msg = script_validation.get_user_friendly_error_message(validation_result)
+            scene.ai_status = f"Replay validation error: {error_msg}"
+            self.report({'ERROR'}, error_msg)
+            return {'CANCELLED'}
 
         # Push undo state
         bpy.ops.ed.undo_push(message="Replay AI Generation")
