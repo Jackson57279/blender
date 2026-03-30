@@ -157,14 +157,10 @@ class AI_PT_AssistantPanel(Panel):
             box = layout.box()
             box.label(text="Generated Script Preview:", icon='SCRIPT')
 
-            # Script text (read-only display)
+            # Editable script text area
             col = box.column()
-            col.scale_y = 0.5
-            script_lines = scene.ai_current_script.split('\n')[:10]  # Show first 10 lines
-            for line in script_lines:
-                col.label(text=line)
-            if len(scene.ai_current_script.split('\n')) > 10:
-                col.label(text="... (truncated)")
+            col.prop(scene, "ai_preview_script", text="")
+            col.label(text="Edit the script before execution if needed", icon='INFO')
 
             # Execute / Cancel buttons
             row = box.row(align=True)
@@ -245,6 +241,12 @@ def register():
         default="",
     )
 
+    bpy.types.Scene.ai_preview_script = StringProperty(
+        name="Preview Script",
+        description="Editable preview of the generated Python script",
+        default="",
+    )
+
     bpy.types.Scene.ai_history = CollectionProperty(
         type=AIHistoryItem,
         name="AI History",
@@ -263,6 +265,7 @@ def unregister():
     # Remove scene properties
     del bpy.types.Scene.ai_history_index
     del bpy.types.Scene.ai_history
+    del bpy.types.Scene.ai_preview_script
     del bpy.types.Scene.ai_current_script
     del bpy.types.Scene.ai_is_generating
     del bpy.types.Scene.ai_status

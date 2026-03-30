@@ -62,8 +62,9 @@ class AI_OT_Generate(Operator):
             # Extract the generated script from the response
             generated_script = response.content
 
-            # Store the script in preview
+            # Store the script in preview (both properties are kept in sync)
             scene.ai_current_script = generated_script
+            scene.ai_preview_script = generated_script
 
             # Add to history
             self._add_to_history(context, scene.ai_prompt, generated_script)
@@ -102,11 +103,11 @@ class AI_OT_ExecuteScript(Operator):
 
     @classmethod
     def poll(cls, context):
-        return bool(context.scene.ai_current_script)
+        return bool(context.scene.ai_preview_script)
 
     def execute(self, context):
         scene = context.scene
-        script = scene.ai_current_script
+        script = scene.ai_preview_script
 
         # Validate script before execution
         validation_result = script_validation.validate_script_safety(script)
@@ -129,6 +130,7 @@ class AI_OT_ExecuteScript(Operator):
 
             # Clear preview
             scene.ai_current_script = ""
+            scene.ai_preview_script = ""
             scene.ai_status = "Script executed successfully"
 
             self.report({'INFO'}, "Script executed successfully!")
@@ -205,11 +207,12 @@ class AI_OT_ClearPreview(Operator):
 
     @classmethod
     def poll(cls, context):
-        return bool(context.scene.ai_current_script)
+        return bool(context.scene.ai_preview_script)
 
     def execute(self, context):
         scene = context.scene
         scene.ai_current_script = ""
+        scene.ai_preview_script = ""
         scene.ai_status = "Preview cleared"
         self.report({'INFO'}, "Preview cleared")
         return {'FINISHED'}
