@@ -60,8 +60,16 @@ class AI_UL_HistoryList(UIList):
         active_propname,
         index,
     ):
-        # Compact display of history item
+        # Row that acts as a clickable button to replay
         row = layout.row(align=True)
+
+        # Make the entire row clickable for replay
+        op = row.operator(
+            "ai.replay_generation",
+            text="",
+            emboss=False,
+        )
+        op.index = index
 
         # Icon based on execution status
         icon_name = 'CHECKMARK' if item.executed else 'SCRIPT'
@@ -73,7 +81,7 @@ class AI_UL_HistoryList(UIList):
             display_text += "..."
         row.label(text=display_text)
 
-        # Replay button
+        # Replay play button on the right
         op = row.operator(
             "ai.replay_generation",
             text="",

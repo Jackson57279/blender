@@ -73,16 +73,55 @@ MATERIAL CREATION:
 - Set metallic: bsdf.inputs["Metallic"].default_value = 0.0-1.0
 - Set roughness: bsdf.inputs["Roughness"].default_value = 0.0-1.0
 - Set emission: bsdf.inputs["Emission"].default_value = (r, g, b, 1.0)
+- Set transmission (glass): bsdf.inputs["Transmission"].default_value = 0.0-1.0
+- Set IOR: bsdf.inputs["IOR"].default_value = 1.45
 
-MODIFIER TYPES (obj.modifiers.new()):
-- Subdivision Surface: type='SUBSURF', levels=2
-- Bevel: type='BEVEL', width=0.02, segments=2
-- Array: type='ARRAY', count=3, relative_offset_displace=(1, 0, 0)
+COMMON MATERIAL COLORS (RGB):
+- Red: (1.0, 0.0, 0.0, 1.0)
+- Green: (0.0, 1.0, 0.0, 1.0)
+- Blue: (0.0, 0.0, 1.0, 1.0)
+- Yellow: (1.0, 1.0, 0.0, 1.0)
+- Orange: (1.0, 0.5, 0.0, 1.0)
+- Purple: (0.5, 0.0, 1.0, 1.0)
+- Pink: (1.0, 0.0, 1.0, 1.0)
+- Cyan: (0.0, 1.0, 1.0, 1.0)
+- White: (1.0, 1.0, 1.0, 1.0)
+- Black: (0.0, 0.0, 0.0, 1.0)
+- Gray: (0.5, 0.5, 0.5, 1.0)
+- Brown: (0.4, 0.2, 0.0, 1.0)
+- Gold: (1.0, 0.84, 0.0, 1.0)
+- Silver: (0.75, 0.75, 0.75, 1.0)
+
+MATERIAL TYPES:
+- Matte/Diffuse: Metallic=0.0, Roughness=0.8-1.0
+- Shiny/Glossy: Metallic=0.0, Roughness=0.1-0.3
+- Metallic: Metallic=0.8-1.0, Roughness=0.2-0.4
+- Mirror: Metallic=1.0, Roughness=0.0
+- Glass: Transmission=0.9-1.0, Roughness=0.0-0.1, IOR=1.45
+- Emissive/Glowing: Emission=(r, g, b, 1.0) with color values > 0
+
+MODIFIER TYPES (obj.modifiers.new(name="Name", type='TYPE')):
+- Subdivision Surface: type='SUBSURF', levels=2-3, render_levels=3-4
+  - Use with shade_smooth() for best results
+  - Start with enough base geometry for good smoothing
+- Bevel: type='BEVEL', width=0.02-0.1, segments=2-6, limit_method='ANGLE'
+  - For rounded edges on hard-surface models
+- Array: type='ARRAY', count=3-5, relative_offset_displace=(1, 0, 0)
+  - Creates copies in rows/columns
 - Mirror: type='MIRROR', use_axis=(True, False, False)
-- Boolean: type='BOOLEAN', operation='DIFFERENCE'
-- Solidify: type='SOLIDIFY', thickness=0.01
-- Displace: type='DISPLACE'
-- Smooth: type='SMOOTH'
+  - Mirrors geometry across specified axis
+- Boolean: type='BOOLEAN', operation='DIFFERENCE'/'UNION'/'INTERSECT'
+  - Requires another object as boolean target
+- Solidify: type='SOLIDIFY', thickness=0.01-0.1
+  - Adds thickness to single-faced geometry
+- Displace: type='DISPLACE', strength=0.1-1.0
+  - Requires vertex groups for controlled displacement
+- Smooth: type='SMOOTH', factor=1.0
+  - Alternative to shade_smooth()
+- Cast: type='CAST', cast_type='SPHERE'/'CYLINDER'/'CUBOID'
+  - Deforms mesh into basic shapes
+- Wave: type='WAVE'
+  - Animated wave deformation
 
 SCRIPT STRUCTURE:
 1. Import statement (only bpy and mathutils if needed)
@@ -113,41 +152,54 @@ Generate only the executable Python script."""
 
 MATERIAL_GENERATION_TEMPLATE = """Create a Blender Python script that generates: {description}
 
-This involves creating materials. Ensure:
-1. Create a new material with a descriptive name
-2. Enable nodes: mat.use_nodes = True
-3. Access the Principled BSDF node
-4. Set appropriate color values (RGB 0.0-1.0)
-5. Set metallic and roughness properties as appropriate
-6. Assign the material to the object
+This involves creating materials. Follow these steps:
+1. Create the mesh object first using bpy.ops.mesh.primitive_*_add()
+2. Create a new material with bpy.data.materials.new(name="MaterialName")
+3. Enable nodes: mat.use_nodes = True
+4. Access the Principled BSDF node: bsdf = mat.node_tree.nodes["Principled BSDF"]
+5. Set Base Color with RGBA tuple: bsdf.inputs["Base Color"].default_value = (r, g, b, 1.0)
+6. Set other properties as needed (Metallic, Roughness, Emission, Transmission)
+7. Assign the material to the object: obj.data.materials.append(mat)
 
-For common colors:
+For common colors (all RGB values 0.0-1.0):
 - Red: (1.0, 0.0, 0.0, 1.0)
 - Green: (0.0, 1.0, 0.0, 1.0)
 - Blue: (0.0, 0.0, 1.0, 1.0)
 - Yellow: (1.0, 1.0, 0.0, 1.0)
-- White: (1.0, 1.0, 1.0, 1.0)
-- Black: (0.0, 0.0, 0.0, 1.0)
 - Orange: (1.0, 0.5, 0.0, 1.0)
 - Purple: (0.5, 0.0, 1.0, 1.0)
+- Pink: (1.0, 0.0, 1.0, 1.0)
+- Cyan: (0.0, 1.0, 1.0, 1.0)
+- White: (1.0, 1.0, 1.0, 1.0)
+- Black: (0.0, 0.0, 0.0, 1.0)
+- Gold: (1.0, 0.84, 0.0, 1.0)
+- Silver: (0.75, 0.75, 0.75, 1.0)
+
+Material types:
+- Shiny/Metallic: Metallic=0.8-1.0, Roughness=0.1-0.4
+- Matte/Diffuse: Metallic=0.0, Roughness=0.7-1.0
+- Glass: Transmission=0.9-1.0, Roughness=0.0-0.1, IOR=1.45
+- Emissive/Glowing: Emission=(r, g, b, 1.0) with color values
 
 Generate only the executable Python script."""
 
 MODIFIER_GENERATION_TEMPLATE = """Create a Blender Python script that generates: {description}
 
-This involves using modifiers. Ensure:
-1. Create the base mesh object first
-2. Use obj.modifiers.new(name="ModifierName", type='MODTYPE')
+This involves using modifiers. Follow these steps:
+1. Create the base mesh object first using bpy.ops.mesh.primitive_*_add()
+2. Add modifiers using: obj.modifiers.new(name="ModifierName", type='MODTYPE')
 3. Configure modifier properties appropriately
-4. Common modifier types: SUBSURF (subdivision), BEVEL, ARRAY, MIRROR
+4. For subdivision: type='SUBSURF', levels=2-3, then use bpy.ops.object.shade_smooth()
+5. For bevel: type='BEVEL', width=0.02-0.1, segments=2-6
+6. For array: type='ARRAY', count=3-5, relative_offset_displace=(1, 0, 0)
+7. For mirror: type='MIRROR', use_axis=(True, False, False)
+8. For solidify: type='SOLIDIFY', thickness=0.01-0.1
 
-For subdivision surface:
-- Start with a cube or sphere with enough geometry
-- Set levels=2 or 3 for smooth results
-
-For bevel:
-- Set width appropriate to object size
-- Use segments=2 or more for rounded edges
+Common modifier workflow:
+- Subdivision + Smooth: Creates smooth organic shapes
+- Bevel: Rounds hard edges on mechanical objects
+- Array + Object: Creates repeating patterns
+- Mirror: Creates symmetrical objects efficiently
 
 Generate only the executable Python script."""
 
@@ -244,8 +296,18 @@ PROMPT_TEMPLATES = {
 # Keywords that hint at generation type
 GENERATION_TYPE_KEYWORDS = {
     "primitive": ["cube", "sphere", "cylinder", "cone", "torus", "plane", "circle", "grid", "monkey", "suzanne"],
-    "material": ["red", "blue", "green", "color", "material", "texture", "shiny", "metallic", "matte", "rough", "emissive", "glowing"],
-    "modifier": ["smooth", "subdivision", "subsurf", "bevel", "rounded", "array", "mirror", "duplicate", "solid", "thickness"],
+    "material": [
+        "red", "blue", "green", "yellow", "orange", "purple", "pink", "cyan", "white", "black", 
+        "gray", "brown", "gold", "silver", "color", "material", "texture", "shiny", "metallic", 
+        "matte", "rough", "emissive", "glowing", "glass", "transparent", "translucent", "mirror",
+        "glossy", "diffuse", "shaded", "colored", "tinted"
+    ],
+    "modifier": [
+        "smooth", "subdivision", "subsurf", "bevel", "rounded", "array", "mirror", 
+        "duplicate", "solid", "thickness", "displace", "boolean", "solidify", "cast", 
+        "wave", "curve", "lattice", "shrinkwrap", "wrap", "hook", "simpledeform",
+        "bend", "twist", "taper", "stretch"
+    ],
     "complex": ["chair", "table", "car", "house", "building", "furniture", "detailed", "complex", "detailed"],
     "multi_object": ["three", "five", "ten", "multiple", "several", "row", "grid", "pattern", "array", "many", "few"],
     "animation": ["animate", "rotate", "spin", "move", "bounce", "swing", "orbit", "keyframe", "motion"],
@@ -273,9 +335,31 @@ def detect_generation_type(prompt: str) -> str:
         if score > 0:
             type_scores[gen_type] = score
 
-    # Return type with highest score, or "complex" if no match
+    # Priority ordering for when scores are equal or close
+    # Material and modifier types should take precedence over primitive
+    # because they represent more specific functionality
+    priority_order = [
+        "animation", "lighting", "camera",  # Scene setup first
+        "material", "modifier",              # Object enhancement second
+        "multi_object",                      # Count-based third
+        "primitive",                         # Basic shapes last
+        "complex",                           # Default fallback
+    ]
+
     if type_scores:
+        max_score = max(type_scores.values())
+        # Get all types with max score
+        top_types = [t for t, s in type_scores.items() if s == max_score]
+        
+        # If there's a tie, use priority ordering
+        if len(top_types) > 1:
+            for priority_type in priority_order:
+                if priority_type in top_types:
+                    return priority_type
+        
+        # Return type with highest score
         return max(type_scores, key=type_scores.get)
+    
     return "complex"
 
 
@@ -520,6 +604,217 @@ cyl.data.materials.append(mat)
 # Ensure cylinder is selected and active
 cyl.select_set(True)
 bpy.context.view_layer.objects.active = cyl
+''',
+    "red_sphere_subdivision": '''import bpy
+
+# Create a red sphere with subdivision surface modifier
+bpy.ops.object.select_all(action='DESELECT')
+
+# Create UV sphere
+bpy.ops.mesh.primitive_uv_sphere_add(radius=1, location=(0, 0, 0), segments=32, ring_count=16)
+sphere = bpy.context.active_object
+sphere.name = "RedSmoothSphere"
+
+# Add subdivision surface modifier for smoothness
+mod = sphere.modifiers.new(name="Subdivision", type='SUBSURF')
+mod.levels = 2
+mod.render_levels = 3
+
+# Create red material
+mat = bpy.data.materials.new(name="RedMaterial")
+mat.use_nodes = True
+bsdf = mat.node_tree.nodes["Principled BSDF"]
+bsdf.inputs["Base Color"].default_value = (1.0, 0.0, 0.0, 1.0)
+bsdf.inputs["Roughness"].default_value = 0.3
+
+# Assign material to sphere
+sphere.data.materials.append(mat)
+
+# Apply smooth shading
+bpy.ops.object.shade_smooth()
+
+# Ensure sphere is selected and active
+sphere.select_set(True)
+bpy.context.view_layer.objects.active = sphere
+''',
+    "beveled_cube": '''import bpy
+
+# Create a cube with bevel modifier for rounded edges
+bpy.ops.object.select_all(action='DESELECT')
+
+# Create cube
+bpy.ops.mesh.primitive_cube_add(size=2, location=(0, 0, 0))
+cube = bpy.context.active_object
+cube.name = "BeveledCube"
+
+# Add bevel modifier
+bevel = cube.modifiers.new(name="Bevel", type='BEVEL')
+bevel.width = 0.1
+bevel.segments = 4
+bevel.limit_method = 'ANGLE'
+
+# Add subdivision for smoothness
+subsurf = cube.modifiers.new(name="Subdivision", type='SUBSURF')
+subsurf.levels = 1
+
+# Apply smooth shading
+bpy.ops.object.shade_smooth()
+
+# Ensure cube is selected and active
+cube.select_set(True)
+bpy.context.view_layer.objects.active = cube
+''',
+    "gold_metallic_sphere": '''import bpy
+
+# Create a shiny gold metallic sphere
+bpy.ops.object.select_all(action='DESELECT')
+
+# Create UV sphere
+bpy.ops.mesh.primitive_uv_sphere_add(radius=1, location=(0, 0, 0), segments=32, ring_count=16)
+sphere = bpy.context.active_object
+sphere.name = "GoldSphere"
+
+# Add subdivision for smooth surface
+mod = sphere.modifiers.new(name="Subdivision", type='SUBSURF')
+mod.levels = 2
+mod.render_levels = 3
+
+# Create gold metallic material
+mat = bpy.data.materials.new(name="GoldMaterial")
+mat.use_nodes = True
+bsdf = mat.node_tree.nodes["Principled BSDF"]
+bsdf.inputs["Base Color"].default_value = (1.0, 0.84, 0.0, 1.0)  # Gold color
+bsdf.inputs["Metallic"].default_value = 1.0
+bsdf.inputs["Roughness"].default_value = 0.2
+
+# Assign material
+sphere.data.materials.append(mat)
+
+# Apply smooth shading
+bpy.ops.object.shade_smooth()
+
+# Ensure sphere is selected and active
+sphere.select_set(True)
+bpy.context.view_layer.objects.active = sphere
+''',
+    "glass_material_example": '''import bpy
+
+# Create a glass sphere
+bpy.ops.object.select_all(action='DESELECT')
+
+# Create UV sphere with good geometry
+bpy.ops.mesh.primitive_uv_sphere_add(radius=1, location=(0, 0, 0), segments=32, ring_count=16)
+sphere = bpy.context.active_object
+sphere.name = "GlassSphere"
+
+# Add subdivision for smooth surface
+mod = sphere.modifiers.new(name="Subdivision", type='SUBSURF')
+mod.levels = 2
+
+# Create glass material
+mat = bpy.data.materials.new(name="GlassMaterial")
+mat.use_nodes = True
+bsdf = mat.node_tree.nodes["Principled BSDF"]
+bsdf.inputs["Base Color"].default_value = (1.0, 1.0, 1.0, 1.0)
+bsdf.inputs["Roughness"].default_value = 0.05
+bsdf.inputs["Transmission"].default_value = 0.95
+bsdf.inputs["IOR"].default_value = 1.45
+
+# Assign material
+sphere.data.materials.append(mat)
+
+# Apply smooth shading
+bpy.ops.object.shade_smooth()
+
+# Ensure sphere is selected and active
+sphere.select_set(True)
+bpy.context.view_layer.objects.active = sphere
+''',
+    "array_modifier_example": '''import bpy
+
+# Create a row of objects using array modifier
+bpy.ops.object.select_all(action='DESELECT')
+
+# Create base cube
+bpy.ops.mesh.primitive_cube_add(size=1, location=(0, 0, 0))
+cube = bpy.context.active_object
+cube.name = "ArrayCube"
+
+# Create green material
+mat = bpy.data.materials.new(name="GreenMaterial")
+mat.use_nodes = True
+bsdf = mat.node_tree.nodes["Principled BSDF"]
+bsdf.inputs["Base Color"].default_value = (0.0, 0.8, 0.2, 1.0)
+bsdf.inputs["Roughness"].default_value = 0.4
+cube.data.materials.append(mat)
+
+# Add array modifier to create 5 copies in a row
+array_mod = cube.modifiers.new(name="Array", type='ARRAY')
+array_mod.count = 5
+array_mod.relative_offset_displace = (1.5, 0, 0)
+
+# Ensure cube is selected and active
+cube.select_set(True)
+bpy.context.view_layer.objects.active = cube
+''',
+    "mirror_modifier_example": '''import bpy
+
+# Create a symmetrical object using mirror modifier
+bpy.ops.object.select_all(action='DESELECT')
+
+# Create cube at positive X (will be mirrored)
+bpy.ops.mesh.primitive_cube_add(size=1, location=(1, 0, 0))
+cube = bpy.context.active_object
+cube.name = "MirroredObject"
+
+# Create blue material
+mat = bpy.data.materials.new(name="BlueMaterial")
+mat.use_nodes = True
+bsdf = mat.node_tree.nodes["Principled BSDF"]
+bsdf.inputs["Base Color"].default_value = (0.0, 0.4, 1.0, 1.0)
+bsdf.inputs["Roughness"].default_value = 0.3
+cube.data.materials.append(mat)
+
+# Add mirror modifier across X axis
+mirror = cube.modifiers.new(name="Mirror", type='MIRROR')
+mirror.use_axis = (True, False, False)
+mirror.use_mirror_merge = True
+
+# Ensure cube is selected and active
+cube.select_set(True)
+bpy.context.view_layer.objects.active = cube
+''',
+    "emissive_glowing_object": '''import bpy
+
+# Create a glowing emissive object
+bpy.ops.object.select_all(action='DESELECT')
+
+# Create UV sphere
+bpy.ops.mesh.primitive_uv_sphere_add(radius=1, location=(0, 0, 0), segments=32, ring_count=16)
+sphere = bpy.context.active_object
+sphere.name = "GlowingSphere"
+
+# Add subdivision
+mod = sphere.modifiers.new(name="Subdivision", type='SUBSURF')
+mod.levels = 1
+
+# Create emissive glowing material
+mat = bpy.data.materials.new(name="EmissiveMaterial")
+mat.use_nodes = True
+bsdf = mat.node_tree.nodes["Principled BSDF"]
+bsdf.inputs["Base Color"].default_value = (0.0, 0.0, 0.0, 1.0)
+bsdf.inputs["Roughness"].default_value = 0.5
+bsdf.inputs["Emission"].default_value = (0.0, 1.0, 1.0, 1.0)  # Cyan glow
+
+# Assign material
+sphere.data.materials.append(mat)
+
+# Apply smooth shading
+bpy.ops.object.shade_smooth()
+
+# Ensure sphere is selected and active
+sphere.select_set(True)
+bpy.context.view_layer.objects.active = sphere
 ''',
 }
 

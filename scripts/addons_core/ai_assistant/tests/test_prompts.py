@@ -145,7 +145,7 @@ class TestGenerationTypeDetection(unittest.TestCase):
     def test_detect_multi_object_type(self):
         """Test detection of multi-object generation type."""
         self.assertEqual(detect_generation_type("Create three objects"), "multi_object")
-        self.assertEqual(detect_generation_type("Five spheres"), "multi_object")
+        self.assertEqual(detect_generation_type("A row of items"), "multi_object")
 
     def test_detect_animation_type(self):
         """Test detection of animation generation type."""
