@@ -5,3 +5,6 @@
 """
 Tests for the AI Assistant add-on.
 """
+
+# Note: Tests are designed to be run standalone without bpy dependency
+# Use: python3 test_script_validation.py directly""

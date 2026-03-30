@@ -23,12 +23,14 @@ CRITICAL RULES:
 2. The script must be valid Python that can be executed directly with exec() in Blender's Python environment.
 3. Use ONLY bpy and mathutils modules. No external libraries, no file I/O, no network calls.
 4. Always create VISIBLE mesh objects in the current scene.
-5. Objects must have DESCRIPTIVE names based on what they represent.
-6. ALWAYS deselect all objects before creating new ones: bpy.ops.object.select_all(action='DESELECT')
-7. ALWAYS select the newly created object(s) and make them active at the end.
-8. Handle errors gracefully - use try-except only when necessary.
-9. When materials or colors are requested, create and assign them properly.
-10. When modifiers are requested, add them with sensible default settings.
+5. Objects must have DESCRIPTIVE, MEANINGFUL names based on what they represent (e.g., "RedCube", "SmoothSphere", "WoodenTable").
+6. When creating MULTIPLE objects, give EACH object a UNIQUE, DESCRIPTIVE name (e.g., "ChairLeg_001", "ChairLeg_002", "ChairSeat").
+7. ALWAYS deselect all objects before creating new ones: bpy.ops.object.select_all(action='DESELECT')
+8. ALWAYS select the newly created object(s) and make them active at the end.
+9. Handle errors gracefully - use try-except only when necessary.
+10. When materials or colors are requested, create and assign them properly.
+11. When modifiers are requested, add them with sensible default settings.
+12. Ensure objects are linked to the current scene collection so they appear in the outliner.
 
 AVAILABLE BLENDER API MODULES:
 - bpy: Blender Python API
@@ -59,10 +61,18 @@ OBJECT MANAGEMENT:
 - Select object: obj.select_set(True)
 - Make active: bpy.context.view_layer.objects.active = obj
 - Delete selected: bpy.ops.object.delete()
-- Rename: obj.name = "NewName"
+- Rename: obj.name = "NewName" (use DESCRIPTIVE names, not generic like "Cube", "Sphere")
 - Set location: obj.location = (x, y, z)
 - Set rotation: obj.rotation_euler = (rx, ry, rz)  # in radians
 - Set scale: obj.scale = (sx, sy, sz)
+- Link to scene: bpy.context.collection.objects.link(obj) (ensures object appears in outliner)
+
+NAMING CONVENTIONS (MANDATORY):
+- Single primitive: Use descriptive name based on color/material + shape (e.g., "RedCube", "GoldSphere", "GlassCylinder")
+- Multi-part objects: Use descriptive part names with suffixes (e.g., "TableTop", "TableLeg_001", "TableLeg_002")
+- Objects with materials: Include material in name (e.g., "ChromeSphere", "WoodenChair")
+- NEVER leave objects with default names like "Cube", "Sphere.001", "Mesh"
+- Names should be in PascalCase or with underscores for readability
 
 MATERIAL CREATION:
 - Create material: mat = bpy.data.materials.new(name="MaterialName")
@@ -207,10 +217,11 @@ COMPLEX_OBJECT_TEMPLATE = """Create a Blender Python script that generates: {des
 
 This is a complex object request. Ensure:
 1. Build the object from appropriate primitives or create mesh data programmatically
-2. For multi-part objects, create each part with descriptive names
+2. For multi-part objects, create each part with UNIQUE, DESCRIPTIVE names (e.g., "Chair_Leg_001", "Table_Top", not "Cube.001")
 3. Use collections or parenting if logical grouping is needed
 4. Apply appropriate materials to each part
 5. Position parts correctly relative to each other
+6. Ensure all objects are linked to the current scene collection for outliner visibility
 
 If creating detailed geometry:
 - Use bpy.data.meshes.new() and bpy.data.objects.new() for manual mesh construction
@@ -222,15 +233,17 @@ Generate only the executable Python script."""
 MULTI_OBJECT_TEMPLATE = """Create a Blender Python script that generates: {description}
 
 This request involves multiple objects. Ensure:
-1. Create each object with a unique, descriptive name
-2. Position objects relative to each other appropriately
-3. If the objects form a logical group, organize them appropriately
-4. Each object should be selectable and manipulable independently
-5. Leave all created objects selected at the end
+1. Create EACH object with a UNIQUE, DESCRIPTIVE name (not generic names like "Cube", "Sphere")
+2. Examples of good names: "RedCube", "BlueSphere", "Leg_001", "Leg_002", "Seat_Cushion"
+3. Position objects relative to each other appropriately
+4. If the objects form a logical group, organize them appropriately
+5. Each object should be selectable and manipulable independently (appears separately in outliner)
+6. Leave ALL created objects selected at the end
+7. Ensure all objects are linked to the current scene collection
 
 For arrays or patterns:
 - Use the Array modifier for repeated geometry, OR
-- Create multiple objects in a loop with calculated positions
+- Create multiple objects in a loop with calculated positions and unique names (e.g., "Cube_001", "Cube_002")
 
 Generate only the executable Python script."""
 
@@ -536,7 +549,7 @@ def validate_script_format(script: str) -> tuple[bool, str]:
 EXAMPLE_SCRIPTS = {
     "red_cube": '''import bpy
 
-# Create a red cube
+# Create a red cube with proper naming
 bpy.ops.object.select_all(action='DESELECT')
 
 # Create cube
@@ -560,7 +573,7 @@ bpy.context.view_layer.objects.active = cube
 ''',
     "smooth_sphere": '''import bpy
 
-# Create a smooth sphere with subdivision
+# Create a smooth sphere with proper naming
 bpy.ops.object.select_all(action='DESELECT')
 
 # Create UV sphere with good base geometry
@@ -582,7 +595,7 @@ bpy.context.view_layer.objects.active = sphere
 ''',
     "blue_cylinder": '''import bpy
 
-# Create a blue metallic cylinder
+# Create a blue metallic cylinder with proper naming
 bpy.ops.object.select_all(action='DESELECT')
 
 # Create cylinder
@@ -815,6 +828,28 @@ bpy.ops.object.shade_smooth()
 # Ensure sphere is selected and active
 sphere.select_set(True)
 bpy.context.view_layer.objects.active = sphere
+''',
+    "multiple_cubes": '''import bpy
+
+# Create multiple cubes in a row with descriptive names
+bpy.ops.object.select_all(action='DESELECT')
+
+created_objects = []
+for i in range(3):
+    # Create cube at calculated position
+    x_pos = (i - 1) * 3  # Positions: -3, 0, 3
+    bpy.ops.mesh.primitive_cube_add(size=1.5, location=(x_pos, 0, 0))
+    cube = bpy.context.active_object
+    
+    # Assign descriptive unique name
+    cube.name = f"Cube_{i+1:03d}"
+    created_objects.append(cube)
+
+# Select all created objects
+for obj in created_objects:
+    obj.select_set(True)
+if created_objects:
+    bpy.context.view_layer.objects.active = created_objects[-1]
 ''',
 }
 
