@@ -19,8 +19,10 @@ import bpy
 from bpy.props import StringProperty, IntProperty, EnumProperty
 from bpy.types import AddonPreferences
 
-from . import panel
+from . import api_client
 from . import operators
+from . import panel
+from . import prompts
 
 
 class AIAddonPreferences(AddonPreferences):
