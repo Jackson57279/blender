@@ -1,0 +1,28 @@
+{
+  "milestone": "m1-foundation",
+  "group": "ui-and-preferences",
+  "results": {
+    "passed": [
+      "VAL-UI-001",
+      "VAL-UI-002",
+      "VAL-UI-004",
+      "VAL-UI-005",
+      "VAL-PREFS-001",
+      "VAL-PREFS-002",
+      "VAL-PREFS-003"
+    ],
+    "failed": [
+      {
+        "id": "VAL-UI-003",
+        "reason": "Operator configuration mismatch"
+      }
+    ],
+    "blocked": []
+  },
+  "frictions": [],
+  "blockers": [],
+  "toolsUsed": [
+    "python3",
+    "code-inspection"
+  ]
+}

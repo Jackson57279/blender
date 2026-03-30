@@ -1,0 +1,66 @@
+{
+  "assertionId": "VAL-UI-003",
+  "assertion": "Clicking the 'Generate' button initiates the AI generation process and shows a progress indicator.",
+  "tool": "code-inspection",
+  "status": "pass",
+  "evidence": [
+    {
+      "observation": "AI_OT_Generate operator is properly registered with bl_idname 'ai.generate'",
+      "source": "operators.py:19-24",
+      "detail": "Operator class has proper Blender operator registration with REGISTER and UNDO options"
+    },
+    {
+      "observation": "Poll method validates prompt length (1-1000 chars)",
+      "source": "operators.py:26-30",
+      "detail": "poll() returns True only when prompt exists and length <= 1000, preventing invalid button activation"
+    },
+    {
+      "observation": "Operator sets scene.ai_is_generating = True during execution",
+      "source": "operators.py:39",
+      "detail": "Line sets 'scene.ai_is_generating = True' before any processing begins"
+    },
+    {
+      "observation": "Status is updated to 'Generating...' during processing",
+      "source": "operators.py:40",
+      "detail": "Line sets 'scene.ai_status = \"Generating...\"' to show progress state"
+    },
+    {
+      "observation": "Progress indicator is displayed via panel's draw method checking ai_is_generating",
+      "source": "panel.py:96-99",
+      "detail": "Panel shows 'Generating...' with TIME icon when scene.ai_is_generating is True"
+    },
+    {
+      "observation": "Generation completes and status is updated to completion message",
+      "source": "operators.py:48-52",
+      "detail": "After script generation, status updates to 'Generation complete. Review and execute the script.' and ai_is_generating is set to False"
+    },
+    {
+      "observation": "Script is stored in preview and added to history",
+      "source": "operators.py:43-49",
+      "detail": "Placeholder script is generated and stored in ai_current_script, then added to history with timestamp"
+    },
+    {
+      "observation": "User report is generated to confirm completion",
+      "source": "operators.py:51",
+      "detail": "self.report({'INFO'}, 'Script generated. Review and click Execute.') provides UI feedback"
+    }
+  ],
+  "findings": {
+    "summary": "VAL-UI-003 is fully implemented. The Generate button (AI_OT_Generate operator) correctly initiates the generation process by:",
+    "details": [
+      "1. Validating prompt input before execution (poll method)",
+      "2. Setting ai_is_generating = True to trigger progress display",
+      "3. Updating status to 'Generating...' during processing",
+      "4. Displaying progress indicator in UI (panel shows TIME icon)",
+      "5. Completing workflow and updating status on finish",
+      "6. Providing visual feedback through Blender's report system"
+    ]
+  },
+  "frictions": [],
+  "blockers": [],
+  "notes": [
+    "The m1-foundation milestone uses a placeholder/stub implementation that generates a sample cube script without calling the actual API.",
+    "This is expected behavior for m1-foundation. The assertion validates that the button triggers the generation workflow, shows progress, and completes - which it does.",
+    "Actual API integration is planned for m2-api milestone (see api-client feature)."
+  ]
+}

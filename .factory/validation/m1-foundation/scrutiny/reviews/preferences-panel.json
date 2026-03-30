@@ -1,0 +1,26 @@
+{
+  "featureId": "preferences-panel",
+  "status": "pass",
+  "summary": "The preferences panel is correctly implemented in __init__.py with API key status display, model selection dropdown (defaulting to claude-sonnet-4.6), and timeout setting (default 30s). All settings persist through Blender's add-on preferences system.",
+  "issues": [
+    {
+      "severity": "warning",
+      "description": "The default model 'anthropic/claude-sonnet-4.6' uses a hyphen in 'sonnet' but the description says 'Claude Sonnet 4.6'. The actual OpenRouter model ID should be verified - it may need to be 'claude-sonnet-4' or similar. The slash in the model ID is stored as an EnumProperty identifier which is fine.",
+      "location": "/home/dih/blender/scripts/addons_core/ai_assistant/__init__.py:30-36"
+    }
+  ],
+  "sharedStateObservations": [
+    {
+      "type": "pattern",
+      "description": "API key is read from OPENROUTER_API_KEY environment variable at draw time. This is secure - the key value is never stored in preferences or displayed in UI."
+    },
+    {
+      "type": "pattern",
+      "description": "Blender's AddonPreferences class is used with bpy.props EnumProperty and IntProperty for persistent settings storage."
+    },
+    {
+      "type": "documentation",
+      "description": "The model ID format for OpenRouter is 'anthropic/claude-sonnet-4.6' but workers should verify this is the correct current model identifier."
+    }
+  ]
+}
