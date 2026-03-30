@@ -19,6 +19,9 @@ import bpy
 from bpy.props import StringProperty, IntProperty, EnumProperty
 from bpy.types import AddonPreferences
 
+from . import panel
+from . import operators
+
 
 class AIAddonPreferences(AddonPreferences):
     bl_idname = __name__
@@ -78,8 +81,14 @@ def register():
     for cls in classes:
         bpy.utils.register_class(cls)
 
+    panel.register()
+    operators.register()
+
 
 def unregister():
+    operators.unregister()
+    panel.unregister()
+
     for cls in reversed(classes):
         bpy.utils.unregister_class(cls)
 
