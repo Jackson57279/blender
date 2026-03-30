@@ -47,8 +47,8 @@ class AI_OT_Generate(Operator):
         # Create API client with user preferences
         client = api_client.create_client(timeout=prefs.timeout)
 
-        # Build the messages for the API request
-        messages = prompts.build_messages(scene.ai_prompt)
+        # Build the messages for the API request with generation type detection
+        messages = prompts.build_messages(scene.ai_prompt, gen_type=None)
 
         # Make the API call
         response = client.chat_completion(
